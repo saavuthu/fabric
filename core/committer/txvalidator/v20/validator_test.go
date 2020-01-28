@@ -25,7 +25,6 @@ import (
 	"github.com/hyperledger/fabric/common/cauthdsl"
 	commonerrors "github.com/hyperledger/fabric/common/errors"
 	"github.com/hyperledger/fabric/common/ledger/testutil"
-	mockconfig "github.com/hyperledger/fabric/common/mocks/config"
 	"github.com/hyperledger/fabric/common/semaphore"
 	"github.com/hyperledger/fabric/core/committer/txvalidator"
 	tmocks "github.com/hyperledger/fabric/core/committer/txvalidator/mocks"
@@ -45,12 +44,6 @@ import (
 	"github.com/hyperledger/fabric/msp"
 	"github.com/hyperledger/fabric/msp/mgmt"
 	msptesttools "github.com/hyperledger/fabric/msp/mgmt/testtools"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
-	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
-	protosmsp "github.com/hyperledger/fabric-protos-go/msp"
-	"github.com/hyperledger/fabric-protos-go/peer"
-	protospeer "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protos/token"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/stretchr/testify/assert"
@@ -69,18 +62,19 @@ func v20Capabilities() *tmocks.ApplicationCapabilities {
 	ac.On("V2_0Validation").Return(true)
 	ac.On("PrivateChannelData").Return(true)
 	ac.On("KeyLevelEndorsement").Return(true)
+	ac.On("FabToken").Return(false)
 	return ac
 }
 
-func fabTokenCapabilities() *mockconfig.MockApplicationCapabilities {
-	return &mockconfig.MockApplicationCapabilities{
-		V1_2ValidationRv:      true,
-		V1_3ValidationRv:      true,
-		PrivateChannelDataRv:  true,
-		KeyLevelEndorsementRv: true,
-		V2_0ValidationRv:      true,
-		FabTokenRv:            true,
-	}
+func fabTokenCapabilities() *tmocks.ApplicationCapabilities {
+	ac := &tmocks.ApplicationCapabilities{}
+	ac.On("V1_2Validation").Return(true)
+	ac.On("V1_3Validation").Return(true)
+	ac.On("V2_0Validation").Return(true)
+	ac.On("PrivateChannelData").Return(true)
+	ac.On("KeyLevelEndorsement").Return(true)
+	ac.On("FabToken").Return(true)
+	return ac
 }
 
 func createRWset(t *testing.T, ccnames ...string) []byte {

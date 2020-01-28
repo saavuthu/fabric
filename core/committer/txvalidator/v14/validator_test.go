@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
@@ -22,7 +23,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/bccsp/sw"
-	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/cauthdsl"
 	ctxt "github.com/hyperledger/fabric/common/configtx/test"
 	commonerrors "github.com/hyperledger/fabric/common/errors"
@@ -49,12 +49,6 @@ import (
 	"github.com/hyperledger/fabric/msp"
 	"github.com/hyperledger/fabric/msp/mgmt"
 	msptesttools "github.com/hyperledger/fabric/msp/mgmt/testtools"
-	"github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
-	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
-	mb "github.com/hyperledger/fabric-protos-go/msp"
-	"github.com/hyperledger/fabric-protos-go/peer"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protos/token"
 	"github.com/hyperledger/fabric/protoutil"
 	"github.com/stretchr/testify/assert"
@@ -74,6 +68,7 @@ func preV12Capabilities() *tmocks.ApplicationCapabilities {
 	ac.On("PrivateChannelData").Return(false)
 	ac.On("ForbidDuplicateTXIdInBlock").Return(false)
 	ac.On("KeyLevelEndorsement").Return(false)
+	ac.On("FabToken").Return(false)
 	return ac
 }
 
@@ -85,6 +80,7 @@ func v12Capabilities() *tmocks.ApplicationCapabilities {
 	ac.On("PrivateChannelData").Return(true)
 	ac.On("ForbidDuplicateTXIdInBlock").Return(false)
 	ac.On("KeyLevelEndorsement").Return(false)
+	ac.On("FabToken").Return(false)
 	return ac
 }
 
@@ -96,6 +92,19 @@ func v13Capabilities() *tmocks.ApplicationCapabilities {
 	ac.On("PrivateChannelData").Return(true)
 	ac.On("ForbidDuplicateTXIdInBlock").Return(true)
 	ac.On("KeyLevelEndorsement").Return(true)
+	ac.On("FabToken").Return(false)
+	return ac
+}
+
+func fabTokenCapabilities() *tmocks.ApplicationCapabilities {
+	ac := &tmocks.ApplicationCapabilities{}
+	ac.On("V1_2Validation").Return(true)
+	ac.On("V1_3Validation").Return(true)
+	ac.On("V2_0Validation").Return(false)
+	ac.On("PrivateChannelData").Return(true)
+	ac.On("ForbidDuplicateTXIdInBlock").Return(true)
+	ac.On("KeyLevelEndorsement").Return(true)
+	ac.On("FabToken").Return(true)
 	return ac
 }
 
@@ -115,15 +124,11 @@ func setupLedgerAndValidatorWithV13Capabilities(t *testing.T) (ledger.PeerLedger
 	return setupLedgerAndValidatorWithCapabilities(t, v13Capabilities())
 }
 
-<<<<<<< HEAD
-func setupLedgerAndValidatorWithCapabilities(t *testing.T, c *tmocks.ApplicationCapabilities) (ledger.PeerLedger, txvalidator.Validator, func()) {
-=======
 func setupLedgerAndValidatorWithFabTokenCapabilities(t *testing.T) (ledger.PeerLedger, txvalidator.Validator, func()) {
 	return setupLedgerAndValidatorWithCapabilities(t, fabTokenCapabilities())
 }
 
-func setupLedgerAndValidatorWithCapabilities(t *testing.T, c *mockconfig.MockApplicationCapabilities) (ledger.PeerLedger, txvalidator.Validator, func()) {
->>>>>>> parent of 7a1fe06e6... FAB-16115 Remove FabToken
+func setupLedgerAndValidatorWithCapabilities(t *testing.T, c *tmocks.ApplicationCapabilities) (ledger.PeerLedger, txvalidator.Validator, func()) {
 	mspmgr := &mocks2.MSPManager{}
 	idThatSatisfiesPrincipal := &mocks2.Identity{}
 	idThatSatisfiesPrincipal.SatisfiesPrincipalReturns(nil)
@@ -1517,19 +1522,22 @@ func TestTokenCapabilityNotEnabled(t *testing.T) {
 func TestTokenDuplicateTxId(t *testing.T) {
 	theLedger := new(mockLedger)
 	pm := &mocks.Mapper{}
+	cryptoProvider, err := sw.NewDefaultSecurityLevelWithKeystore(sw.NewDummyKeyStore())
+	assert.NoError(t, err)
 	validator := txvalidatorv14.NewTxValidator(
 		"",
 		semaphore.New(10),
 		&mocktxvalidator.Support{LedgerVal: theLedger, ACVal: fabTokenCapabilities()},
 		pm,
+		cryptoProvider,
 	)
+	theLedger.On("GetTransactionByID", mock.Anything).Return(&peer.ProcessedTransaction{}, nil)
 
 	tx := getTokenTx(t)
-	theLedger.On("GetTransactionByID", mock.Anything).Return(&peer.ProcessedTransaction{}, nil)
 
 	b := testutil.NewBlock([]*common.Envelope{tx}, 0, nil)
 
-	err := validator.Validate(b)
+	err = validator.Validate(b)
 
 	assertion := assert.New(t)
 	// We expect no validation error because we simply mark the tx as invalid
