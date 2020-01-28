@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	CHANNELREADERS = policies.ChannelApplicationReaders
-	CHANNELWRITERS = policies.ChannelApplicationWriters
+	CHANNELREADERS      = policies.ChannelApplicationReaders
+	CHANNELWRITERS      = policies.ChannelApplicationWriters
 	CHANNELTOKENISSUERS = policies.ChannelTokenIssuers
 )
 

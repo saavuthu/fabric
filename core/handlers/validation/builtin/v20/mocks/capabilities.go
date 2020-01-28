@@ -26,6 +26,16 @@ type Capabilities struct {
 	collectionUpgradeReturnsOnCall map[int]struct {
 		result1 bool
 	}
+	FabTokenStub        func() bool
+	fabTokenMutex       sync.RWMutex
+	fabTokenArgsForCall []struct {
+	}
+	fabTokenReturns struct {
+		result1 bool
+	}
+	fabTokenReturnsOnCall map[int]struct {
+		result1 bool
+	}
 	ForbidDuplicateTXIdInBlockStub        func() bool
 	forbidDuplicateTXIdInBlockMutex       sync.RWMutex
 	forbidDuplicateTXIdInBlockArgsForCall []struct {
@@ -230,6 +240,58 @@ func (fake *Capabilities) CollectionUpgradeReturnsOnCall(i int, result1 bool) {
 		})
 	}
 	fake.collectionUpgradeReturnsOnCall[i] = struct {
+		result1 bool
+	}{result1}
+}
+
+func (fake *Capabilities) FabToken() bool {
+	fake.fabTokenMutex.Lock()
+	ret, specificReturn := fake.fabTokenReturnsOnCall[len(fake.fabTokenArgsForCall)]
+	fake.fabTokenArgsForCall = append(fake.fabTokenArgsForCall, struct {
+	}{})
+	fake.recordInvocation("FabToken", []interface{}{})
+	fake.fabTokenMutex.Unlock()
+	if fake.FabTokenStub != nil {
+		return fake.FabTokenStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.fabTokenReturns
+	return fakeReturns.result1
+}
+
+func (fake *Capabilities) FabTokenCallCount() int {
+	fake.fabTokenMutex.RLock()
+	defer fake.fabTokenMutex.RUnlock()
+	return len(fake.fabTokenArgsForCall)
+}
+
+func (fake *Capabilities) FabTokenCalls(stub func() bool) {
+	fake.fabTokenMutex.Lock()
+	defer fake.fabTokenMutex.Unlock()
+	fake.FabTokenStub = stub
+}
+
+func (fake *Capabilities) FabTokenReturns(result1 bool) {
+	fake.fabTokenMutex.Lock()
+	defer fake.fabTokenMutex.Unlock()
+	fake.FabTokenStub = nil
+	fake.fabTokenReturns = struct {
+		result1 bool
+	}{result1}
+}
+
+func (fake *Capabilities) FabTokenReturnsOnCall(i int, result1 bool) {
+	fake.fabTokenMutex.Lock()
+	defer fake.fabTokenMutex.Unlock()
+	fake.FabTokenStub = nil
+	if fake.fabTokenReturnsOnCall == nil {
+		fake.fabTokenReturnsOnCall = make(map[int]struct {
+			result1 bool
+		})
+	}
+	fake.fabTokenReturnsOnCall[i] = struct {
 		result1 bool
 	}{result1}
 }
@@ -761,6 +823,8 @@ func (fake *Capabilities) Invocations() map[string][][]interface{} {
 	defer fake.aCLsMutex.RUnlock()
 	fake.collectionUpgradeMutex.RLock()
 	defer fake.collectionUpgradeMutex.RUnlock()
+	fake.fabTokenMutex.RLock()
+	defer fake.fabTokenMutex.RUnlock()
 	fake.forbidDuplicateTXIdInBlockMutex.RLock()
 	defer fake.forbidDuplicateTXIdInBlockMutex.RUnlock()
 	fake.keyLevelEndorsementMutex.RLock()
